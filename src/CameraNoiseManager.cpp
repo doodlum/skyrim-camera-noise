@@ -66,19 +66,19 @@ void CameraNoiseManager::RefreshUI()
 	auto bar = g_ENB->TwGetBarByEnum(!REL::Module::IsVR() ? ENB_API::ENBWindowType::EditorBarEffects : ENB_API::ENBWindowType::EditorBarObjects);  // ENB misnames its own bar, whoops!
 	g_ENB->TwAddVarRW(bar, "EnableCameraNoise", ETwType::TW_TYPE_BOOLCPP, &bEnabled, TWDEF);
 
-	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency1, TWDEF2 " label = fFrequency1 (Translation)");
-	g_ENB->TwAddVarRW(bar, "1PFrequency2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency2, TWDEF2 " label = fFrequency2 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "1PFrequency3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency3, TWDEF2 " label = fFrequency3 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude1, TWDEF2 " label = fAmplitude1 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude2, TWDEF2 " label = fAmplitude2 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude3, TWDEF2 " label = fAmplitude3 (Rotation)");
+	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency1, TWDEF2 " label = 'fFrequency1 (Translation)'");
+	g_ENB->TwAddVarRW(bar, "1PFrequency2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency2, TWDEF2 " label = 'fFrequency2 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "1PFrequency3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency3, TWDEF2 " label = 'fFrequency3 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "1PAmplitude1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude1, TWDEF2 " label = 'fAmplitude1 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "1PAmplitude2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude2, TWDEF2 " label = 'fAmplitude2 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "1PAmplitude3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude3, TWDEF2 " label = 'fAmplitude3 (Rotation)'");
 
-	g_ENB->TwAddVarRW(bar, "3PFrequency1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency1, TWDEF3 " label = fFrequency1 (Translation)");
-	g_ENB->TwAddVarRW(bar, "3PFrequency2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency2, TWDEF3 " label = fFrequency2 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "3PFrequency3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency3, TWDEF3 " label = fFrequency3 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude1, TWDEF3 " label = fAmplitude1 (Translation)");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude2, TWDEF3 " label = fAmplitude2 (Rotation)");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude3, TWDEF3 " label = fAmplitude3 (Rotation)");
+	g_ENB->TwAddVarRW(bar, "3PFrequency1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency1, TWDEF3 " label = 'fFrequency1 (Translation)'");
+	g_ENB->TwAddVarRW(bar, "3PFrequency2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency2, TWDEF3 " label = 'fFrequency2 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "3PFrequency3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency3, TWDEF3 " label = 'fFrequency3 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "3PAmplitude1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude1, TWDEF3 " label = 'fAmplitude1 (Translation)'");
+	g_ENB->TwAddVarRW(bar, "3PAmplitude2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude2, TWDEF3 " label = 'fAmplitude2 (Rotation)'");
+	g_ENB->TwAddVarRW(bar, "3PAmplitude3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude3, TWDEF3 " label = 'fAmplitude3 (Rotation)'");
 
 	g_ENB->TwDefine("EditorBarEffects/'First Person' group = 'MOD:Camera Noise'");
 	g_ENB->TwDefine("EditorBarEffects/'Third Person' group = 'MOD:Camera Noise'");
