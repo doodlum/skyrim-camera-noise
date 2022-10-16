@@ -136,7 +136,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 
 		timeElapsed1 += g_deltaTime * settings.fFrequency1;
 		timeElapsed2 += g_deltaTime * settings.fFrequency2;
-		timeElapsed3 += g_deltaTime * 3.0f * settings.fFrequency3;
+		timeElapsed3 += g_deltaTime * 5.0f * settings.fFrequency3;
 
 		RE::NiPoint3 translationOffset = {
 			(float)perlin1.noise1D(timeElapsed1),
@@ -144,7 +144,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin3.noise1D(timeElapsed1)
 		};
 
-		a_camera->cameraRoot->local.translate += translationOffset * settings.fAmplitude1;
+		a_camera->cameraRoot->local.translate += translationOffset * 0.5f * settings.fAmplitude1;
 
 		// This is wrong, but it looks right
 		RE::NiPoint3 rotationOffset = {
@@ -153,7 +153,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin5.noise1D(timeElapsed2) * glm::two_pi<float>()
 		};
 
-		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset, 0.0005f * settings.fAmplitude2);
+		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset, 0.00015f * settings.fAmplitude2);
 
 		RE::NiPoint3 rotationOffset2 = {
 			(float)perlin5.noise1D(timeElapsed3) * glm::two_pi<float>(),
@@ -161,7 +161,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin7.noise1D(timeElapsed3) * glm::two_pi<float>()
 		};
 
-		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 0.00025f * settings.fAmplitude3);
+		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 0.0001f * settings.fAmplitude3);
 
 		RE::NiUpdateData updateData;
 		a_camera->cameraRoot->UpdateDownwardPass(updateData, 0);
