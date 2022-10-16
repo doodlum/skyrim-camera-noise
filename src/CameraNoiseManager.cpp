@@ -85,8 +85,6 @@ void CameraNoiseManager::RefreshUI()
 	g_ENB->TwDefine("EditorBarEffects/'MOD:Camera Noise' opened=false");
 }
 
-
-
 RE::NiMatrix3 MatrixFromAxisAngle(const RE::NiPoint3& axis, float theta)
 {
 	RE::NiPoint3 a = axis;
@@ -109,10 +107,29 @@ RE::NiMatrix3 MatrixFromAxisAngle(const RE::NiPoint3& axis, float theta)
 	return result;
 }
 
+RE::NiPointer<RE::NiCamera> GetNiCamera(RE::PlayerCamera* camera)
+{
+	// Do other things parent stuff to the camera node? Better safe than sorry I guess
+	if (camera->cameraRoot->GetChildren().size() == 0)
+		return nullptr;
+	for (auto& entry : camera->cameraRoot->GetChildren()) {
+		auto asCamera = skyrim_cast<RE::NiCamera*>(entry.get());
+		if (asCamera)
+			return RE::NiPointer<RE::NiCamera>(asCamera);
+	}
+	return nullptr;
+}
+
+void UpdateInternalWorldToScreenMatrix(RE::NiCamera* a_niCamera)
+{
+	using func_t = decltype(&UpdateInternalWorldToScreenMatrix);
+	REL::Relocation<func_t> func{ REL::RelocationID(69271, 70641) };
+	func(a_niCamera);
+}
+
 void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 {
 	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused()) {
-
 		static float& g_deltaTime = (*(float*)RELOCATION_ID(523660, 410199).address());
 
 		Settings settings = RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? FirstPerson : ThirdPerson;
@@ -120,7 +137,6 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 		timeElapsed1 += g_deltaTime * settings.fFrequency1;
 		timeElapsed2 += g_deltaTime * settings.fFrequency2;
 		timeElapsed3 += g_deltaTime * 3.0f * settings.fFrequency3;
-		
 
 		RE::NiPoint3 translationOffset = {
 			(float)perlin1.noise1D(timeElapsed1),
@@ -130,6 +146,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 
 		a_camera->cameraRoot->local.translate += translationOffset * settings.fAmplitude1;
 
+		// This is wrong, but it looks right
 		RE::NiPoint3 rotationOffset = {
 			(float)perlin3.noise1D(timeElapsed2) * glm::two_pi<float>(),
 			(float)perlin4.noise1D(timeElapsed2) * glm::two_pi<float>(),
@@ -148,5 +165,10 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 
 		RE::NiUpdateData updateData;
 		a_camera->cameraRoot->UpdateDownwardPass(updateData, 0);
+
+		auto playerCamera = RE::PlayerCamera::GetSingleton();
+		auto niCamera = GetNiCamera(playerCamera);
+		if (niCamera && niCamera.get())
+			UpdateInternalWorldToScreenMatrix(niCamera.get());
 	}
 }
