@@ -111,7 +111,7 @@ RE::NiMatrix3 MatrixFromAxisAngle(const RE::NiPoint3& axis, float theta)
 
 void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 {
-	if (bEnabled) {
+	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused()) {
 
 		static float& g_deltaTime = (*(float*)RELOCATION_ID(523660, 410199).address());
 
@@ -120,6 +120,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 		timeElapsed1 += g_deltaTime * settings.fFrequency1;
 		timeElapsed2 += g_deltaTime * settings.fFrequency2;
 		timeElapsed3 += g_deltaTime * 3.0f * settings.fFrequency3;
+		
 
 		RE::NiPoint3 translationOffset = {
 			(float)perlin1.noise1D(timeElapsed1),
