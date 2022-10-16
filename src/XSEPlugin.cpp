@@ -1,8 +1,39 @@
-#include "Hooks.h"
-#include "CameraShakeManager.h"
 
+#include "Hooks.h"
+#include "CameraNoiseManager.h"
+
+#include "ENB/ENBSeriesAPI.h"
+ENB_API::ENBSDKALT1001* g_ENB;
+
+void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
+{
+	switch (a_msg->type) {
+	case SKSE::MessagingInterface::kPostLoad:
+		g_ENB = reinterpret_cast<ENB_API::ENBSDKALT1001*>(ENB_API::RequestENBAPI(ENB_API::SDKVersion::V1001));
+		if (g_ENB) {
+			logger::info("Obtained ENB API");
+			g_ENB->SetCallbackFunction([](ENBCallbackType calltype) {
+				switch (calltype) {
+				case ENBCallbackType::ENBCallback_PostLoad:
+					CameraNoiseManager::GetSingleton()->RefreshUI();
+					CameraNoiseManager::GetSingleton()->LoadINI();
+					break;
+				case ENBCallbackType::ENBCallback_PreSave:
+					CameraNoiseManager::GetSingleton()->SaveINI();
+					break;
+				case ENBCallbackType::ENBCallback_PostReset:
+					CameraNoiseManager::GetSingleton()->RefreshUI();
+					break;
+				}
+			});
+		} else
+			logger::info("Unable to acquire ENB API");
+		break;
+	}
+}
 void Init()
 {
+	SKSE::GetMessagingInterface()->RegisterListener(MessageHandler);
 	Hooks::Install();
 }
 
@@ -56,6 +87,7 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) constinit auto SKSEPlugin_Versio
 	v.PluginName("PluginName");
 	v.PluginVersion({ 1, 0, 0, 0 });
 	v.UsesAddressLibrary(true);
+	v.HasNoStructUse();
 	return v;
 }();
 

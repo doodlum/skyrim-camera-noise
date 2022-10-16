@@ -1,11 +1,11 @@
 #include "Hooks.h"
-#include "CameraShakeManager.h"
+#include "CameraNoiseManager.h"
 
 namespace Hooks
 {
 	void Hooks::Install()
 	{
-		CameraShakeManager::InstallHooks();
+		CameraNoiseManager::InstallHooks();
 		logger::info("Installed all hooks");
 	}
 }
