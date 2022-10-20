@@ -161,7 +161,7 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin7.noise1D(timeElapsed3) * glm::two_pi<float>()
 		};
 
-		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 0.0001f * settings.fAmplitude3);
+		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 0.00005f * settings.fAmplitude3);
 
 		RE::NiUpdateData updateData;
 		a_camera->cameraRoot->UpdateDownwardPass(updateData, 0);
