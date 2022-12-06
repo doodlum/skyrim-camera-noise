@@ -37,6 +37,33 @@ void Init()
 	Hooks::Install();
 }
 
+bool LoadINI(RE::StaticFunctionTag*, RE::BSFixedString filepath)
+{
+	CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, false);
+	return true;
+}
+
+
+bool UnloadINI(RE::StaticFunctionTag*, RE::BSFixedString filepath)
+{
+	CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, true);
+	return true;
+}
+
+bool ResetINI(RE::StaticFunctionTag*)
+{
+	CameraNoiseManager::GetSingleton()->LoadINI();
+	return true;
+}
+
+bool RegisterFuncs(RE::BSScript::IVirtualMachine* a_vm)
+{
+	a_vm->RegisterFunction("LoadIni"sv, "CameraNoise"sv, LoadINI);
+	a_vm->RegisterFunction("UnloadIni"sv, "CameraNoise"sv, UnloadINI);
+	a_vm->RegisterFunction("ResetIni"sv, "CameraNoise"sv, ResetINI);
+	return true;
+}
+
 void InitializeLog()
 {
 #ifndef NDEBUG
@@ -78,6 +105,10 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 	SKSE::Init(a_skse);
 
 	Init();
+
+	const auto papyrus = SKSE::GetPapyrusInterface();
+
+	papyrus->Register(RegisterFuncs);
 
 	return true;
 }
