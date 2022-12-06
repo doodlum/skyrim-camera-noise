@@ -51,6 +51,7 @@ public:
 
 	std::shared_mutex fileLock;
 	void LoadINI();
+	void LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
 	void SaveINI();
 
 	void Update(RE::TESCamera* a_camera);

@@ -1,6 +1,7 @@
 #include "CameraNoiseManager.h"
 
 #define GetSettingFloat(a_section, a_name, a_setting) a_setting = (float)ini.GetDoubleValue(a_section, a_name, 1.0f);
+#define ModSettingFloat(a_section, a_name, a_setting, a_modifier) a_setting += ((float)ini.GetDoubleValue(a_section, a_name, 1.0f) * a_modifier);
 #define SetSettingFloat(a_section, a_name, a_setting) ini.SetDoubleValue(a_section, a_name, a_setting);
 
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
@@ -28,6 +29,32 @@ void CameraNoiseManager::LoadINI()
 	GetSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1);
 	GetSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2);
 	GetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
+}
+
+void CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading)
+{
+	std::lock_guard<std::shared_mutex> lk(fileLock);
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	std::string strpath = "Data\\SKSE\\Plugins\\_CameraNoise\\" + std::string(a_filepath.data());
+	std::wstring widestr = std::wstring(strpath.begin(), strpath.end());
+	ini.LoadFile(widestr.c_str());
+
+	float modifier = a_isUnloading ? -1.0f : 1.0f;
+
+	ModSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1, modifier);
+	ModSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2, modifier);
+	ModSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3, modifier);
+	ModSettingFloat("FirstPerson", "fAmplitude1", FirstPerson.fAmplitude1, modifier);
+	ModSettingFloat("FirstPerson", "fAmplitude2", FirstPerson.fAmplitude2, modifier);
+	ModSettingFloat("FirstPerson", "fAmplitude3", FirstPerson.fAmplitude3, modifier);
+
+	ModSettingFloat("ThirdPerson", "fFrequency1", ThirdPerson.fFrequency1, modifier);
+	ModSettingFloat("ThirdPerson", "fFrequency2", ThirdPerson.fFrequency2, modifier);
+	ModSettingFloat("ThirdPerson", "fFrequency3", ThirdPerson.fFrequency3, modifier);
+	ModSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1, modifier);
+	ModSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2, modifier);
+	ModSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3, modifier);
 }
 
 void CameraNoiseManager::SaveINI()
