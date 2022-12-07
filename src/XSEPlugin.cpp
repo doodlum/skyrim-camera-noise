@@ -64,6 +64,57 @@ bool RegisterFuncs(RE::BSScript::IVirtualMachine* a_vm)
 	return true;
 }
 
+void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
+{
+	std::vector<float> _data = CameraNoiseManager::GetSingleton()->GetData();
+	if (!a_intfc->OpenRecord('ARR_', 1)) {
+		logger::error("Failed to open record for noise data.");
+	} else {
+		std::size_t size = _data.size();
+		if (!a_intfc->WriteRecordData(size)) {
+			logger::error("Failed to write size for noise data.");
+		} else {
+			for (float& value : _data) {
+				if (!a_intfc->WriteRecordData(value)) {
+					logger::error("Failed to write value(s) for noise data.");
+					break;
+				}
+			}
+		}
+	}
+}
+
+void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
+{
+	std::vector<float> _data;
+
+	std::uint32_t type;
+	std::uint32_t version;
+	std::uint32_t length;
+
+	while (a_intfc->GetNextRecordInfo(type, version, length)) {
+		switch (type) {
+		case 'ARR_':
+			{
+				std::size_t size;
+				if (!a_intfc->ReadRecordData(size)) {
+					logger::error("Failed to load size of noise data.");
+				}
+				for (std::uint32_t i = 0; i < size; i++) {
+					float value;
+					if (!a_intfc->ReadRecordData(value)) {
+						logger::error("Failed to load value(s) of noise data.");
+					} else {
+						_data.push_back(value);
+					}
+				}
+			}
+		}
+	}
+
+	CameraNoiseManager::GetSingleton()->Set_Data(_data);
+}
+
 void InitializeLog()
 {
 #ifndef NDEBUG
@@ -109,6 +160,11 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 	const auto papyrus = SKSE::GetPapyrusInterface();
 
 	papyrus->Register(RegisterFuncs);
+
+	auto serialization = SKSE::GetSerializationInterface();
+	serialization->SetUniqueID('CNOI');
+	serialization->SetSaveCallback(SaveNoiseData);
+	serialization->SetLoadCallback(LoadNoiseData);
 
 	return true;
 }

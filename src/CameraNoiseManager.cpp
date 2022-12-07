@@ -6,6 +6,32 @@
 
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
 #define SetSettingBool(a_section, a_setting) ini.SetBoolValue(a_section, #a_setting, a_setting);
+ 
+
+std::vector<float> CameraNoiseManager::GetData()
+{
+	return std::vector<float>{FirstPerson.fFrequency1, FirstPerson.fFrequency2, FirstPerson.fFrequency3,
+								FirstPerson.fAmplitude1, FirstPerson.fAmplitude2, FirstPerson.fAmplitude3,
+								ThirdPerson.fFrequency1, ThirdPerson.fFrequency2, ThirdPerson.fFrequency3,
+								ThirdPerson.fAmplitude1, ThirdPerson.fAmplitude2, ThirdPerson.fAmplitude3};
+}
+
+void CameraNoiseManager::Set_Data(std::vector<float> _data)
+{
+	FirstPerson.fFrequency1 = _data[0];
+	FirstPerson.fFrequency2 = _data[1];
+	FirstPerson.fFrequency3 = _data[2];
+	FirstPerson.fAmplitude1 = _data[3];
+	FirstPerson.fAmplitude2 = _data[4];
+	FirstPerson.fAmplitude3 = _data[5];
+
+	ThirdPerson.fFrequency1 = _data[6];
+	ThirdPerson.fFrequency2 = _data[7];
+	ThirdPerson.fFrequency3 = _data[8];
+	ThirdPerson.fAmplitude1 = _data[9];
+	ThirdPerson.fAmplitude2 = _data[10];
+	ThirdPerson.fAmplitude3 = _data[11];
+}
 
 void CameraNoiseManager::LoadINI()
 {

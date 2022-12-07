@@ -37,6 +37,9 @@ public:
 	Settings FirstPerson;
 	Settings ThirdPerson;
 
+	std::vector<float> GetData();
+	void Set_Data(std::vector<float> _data);
+
 	const siv::PerlinNoise perlin1{ 1 };
 	const siv::PerlinNoise perlin2{ 2 };
 	const siv::PerlinNoise perlin3{ 3 };
