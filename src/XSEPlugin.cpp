@@ -112,7 +112,9 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 		}
 	}
 
-	CameraNoiseManager::GetSingleton()->Set_Data(_data);
+	if (!_data.empty()) {
+		CameraNoiseManager::GetSingleton()->Set_Data(_data);
+	}
 }
 
 void InitializeLog()
