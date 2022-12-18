@@ -1,7 +1,7 @@
 #include "CameraNoiseManager.h"
 
 #define GetSettingFloat(a_section, a_name, a_setting) a_setting = (float)ini.GetDoubleValue(a_section, a_name, 1.0f);
-#define ModSettingFloat(a_section, a_name, a_setting, a_modifier) a_setting += ((float)ini.GetDoubleValue(a_section, a_name, 1.0f) * a_modifier);
+#define ModSettingFloat(a_section, a_name, a_setting, a_modifier) a_setting = std::max(0.0f, a_setting + ((float)ini.GetDoubleValue(a_section, a_name, 1.0f) * a_modifier));
 #define SetSettingFloat(a_section, a_name, a_setting) ini.SetDoubleValue(a_section, a_name, a_setting);
 
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
