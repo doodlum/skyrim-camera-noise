@@ -53,6 +53,7 @@ bool UnloadINI(RE::StaticFunctionTag*, RE::BSFixedString filepath)
 bool ResetINI(RE::StaticFunctionTag*)
 {
 	CameraNoiseManager::GetSingleton()->LoadINI();
+	CameraNoiseManager::GetSingleton()->inis.clear();
 	return true;
 }
 
@@ -142,7 +143,7 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 			if (!a_intfc->ReadRecordData(iniSize)) {
 				logger::error("Failed to load size of loaded inis.");
 			} else {
-				//logger::info("Successfully loaded size {} of loaded inis", iniSize);
+				//logger::info("Successfully loaded length of loaded inis = {}", iniSize);
 				const std::size_t c_size = sizeof(char);
 				for (std::uint32_t i = 0; i < iniSize; i++) {
 					std::size_t a_iniLength;
