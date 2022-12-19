@@ -103,7 +103,7 @@ void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
 					if (!a_intfc->WriteRecordData(c_data, iniLength * c_size)) {
 						logger::error("Failed to write ini.");
 					} else {
-						logger::info("Successfully wrote {}", a_ini);
+						//logger::info("Successfully wrote {}", a_ini);
 					}
 				}
 			}
@@ -126,13 +126,13 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 			if (!a_intfc->ReadRecordData(size)) {
 				logger::error("Failed to load size of noise data.");
 			} else {
-				logger::info("Successfully loaded size {} of noise data.", size);
+				//logger::info("Successfully loaded size {} of noise data.", size);
 				for (std::uint32_t i = 0; i < size; i++) {
 					float value;
 					if (!a_intfc->ReadRecordData(value)) {
 						logger::error("Failed to load value(s) of noise data.");
 					} else {
-						logger::info("Successfully loaded value {} = {}", i, value);
+						//logger::info("Successfully loaded value {} = {}", i, value);
 						_data.push_back(value);
 					}
 				}
@@ -156,7 +156,7 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 						} else {
 							a_ini[a_iniLength] = '\0';
 							std::string str_ini = std::string(a_ini);
-							logger::info("Successfully loaded {}", str_ini);
+							//logger::info("Successfully loaded {}", str_ini);
 							delete[] a_ini;
 							_inis.insert(str_ini);
 						}
