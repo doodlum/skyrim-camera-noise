@@ -82,38 +82,99 @@ void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
 			}
 		}
 	}
-}
 
-void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
-{
-	std::vector<float> _data;
-
-	std::uint32_t type;
-	std::uint32_t version;
-	std::uint32_t length;
-
-	while (a_intfc->GetNextRecordInfo(type, version, length)) {
-		switch (type) {
-		case 'ARR_':
-			{
-				std::size_t size;
-				if (!a_intfc->ReadRecordData(size)) {
-					logger::error("Failed to load size of noise data.");
-				}
-				for (std::uint32_t i = 0; i < size; i++) {
-					float value;
-					if (!a_intfc->ReadRecordData(value)) {
-						logger::error("Failed to load value(s) of noise data.");
+	std::unordered_set<std::string> inis = CameraNoiseManager::GetSingleton()->inis;
+	if (!a_intfc->OpenRecord('INI_', 1)) {
+		logger::error("Failed to open record for loaded inis.");
+	} else {
+		std::size_t size = inis.size();
+		if (!a_intfc->WriteRecordData(size)) {
+			logger::error("Failed to write size for loaded inis.");
+		} else {
+			//logger::info("Successfully wrote size {}", size);
+			const std::size_t c_size = sizeof(char);
+			for (auto& a_ini : inis) {
+				const char* c_data = a_ini.c_str();
+				std::size_t iniLength = strlen(c_data);
+				if (!a_intfc->WriteRecordData(iniLength)) {
+					logger::error("Failed to write length of ini file path.");
+				} else {
+					if (!a_intfc->WriteRecordData(c_data, iniLength * c_size)) {
+						logger::error("Failed to write ini.");
 					} else {
-						_data.push_back(value);
+						logger::info("Successfully wrote {}", a_ini);
 					}
 				}
 			}
 		}
 	}
+}
+
+void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
+{
+	std::vector<float> _data;
+	std::unordered_set<std::string> _inis;
+
+	std::uint32_t type;
+	std::uint32_t version;
+	std::uint32_t length;
+	while (a_intfc->GetNextRecordInfo(type, version, length)) {
+		switch (type) {
+		case 'ARR_':
+			std::size_t size;
+			if (!a_intfc->ReadRecordData(size)) {
+				logger::error("Failed to load size of noise data.");
+			} else {
+				logger::info("Successfully loaded size {} of noise data.", size);
+				for (std::uint32_t i = 0; i < size; i++) {
+					float value;
+					if (!a_intfc->ReadRecordData(value)) {
+						logger::error("Failed to load value(s) of noise data.");
+					} else {
+						logger::info("Successfully loaded value {} = {}", i, value);
+						_data.push_back(value);
+					}
+				}
+			}
+			break;
+		case 'INI_':
+			std::size_t iniSize;
+			if (!a_intfc->ReadRecordData(iniSize)) {
+				logger::error("Failed to load size of loaded inis.");
+			} else {
+				//logger::info("Successfully loaded size {} of loaded inis", iniSize);
+				const std::size_t c_size = sizeof(char);
+				for (std::uint32_t i = 0; i < iniSize; i++) {
+					std::size_t a_iniLength;
+					if (!a_intfc->ReadRecordData(a_iniLength)) {
+						logger::error("Failed to load length of ini file path.");
+					} else {
+						char* a_ini = new char[a_iniLength];
+						if (!a_intfc->ReadRecordData(a_ini, a_iniLength * c_size)) {
+							logger::error("Failed to load ini.");
+						} else {
+							a_ini[a_iniLength] = '\0';
+							std::string str_ini = std::string(a_ini);
+							logger::info("Successfully loaded {}", str_ini);
+							delete[] a_ini;
+							_inis.insert(str_ini);
+						}
+					}
+				}
+			}
+			break;
+		default:
+			logger::error("Unrecognized signature type!");
+			break;
+		}
+	}
 
 	if (!_data.empty()) {
 		CameraNoiseManager::GetSingleton()->Set_Data(_data);
+	}
+
+	if (!_inis.empty()) {
+		CameraNoiseManager::GetSingleton()->inis = std::move(_inis);
 	}
 }
 

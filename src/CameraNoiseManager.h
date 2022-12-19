@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <shared_mutex>
+#include <unordered_set>
 
 #include <SimpleINI.h>
 
@@ -37,8 +38,10 @@ public:
 	Settings FirstPerson;
 	Settings ThirdPerson;
 
+	std::unordered_set<std::string> inis;
+	
 	std::vector<float> GetData();
-	void Set_Data(std::vector<float> _data);
+	void Set_Data(const std::vector<float>& _data);
 
 	const siv::PerlinNoise perlin1{ 1 };
 	const siv::PerlinNoise perlin2{ 2 };
@@ -55,6 +58,7 @@ public:
 	std::shared_mutex fileLock;
 	void LoadINI();
 	void LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
+	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
 
 	void Update(RE::TESCamera* a_camera);
