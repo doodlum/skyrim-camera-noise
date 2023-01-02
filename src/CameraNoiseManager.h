@@ -40,6 +40,8 @@ public:
 
 	bool bInterpolation = false;
 	uint32_t interpolationCounter = 0;
+	uint32_t iInterpolationX = 3;
+	uint32_t iInterpolationY = 5;
 	std::pair<Settings, Settings> interpolation;
 
 	std::unordered_set<std::string> inis;
@@ -65,7 +67,7 @@ public:
 	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
 
-
+	void SetInterpolationOffset();
 	bool CheckInterpolation();
 	float GetInterpolation(float i_value);
 	void ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::*field);

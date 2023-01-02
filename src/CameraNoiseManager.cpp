@@ -7,6 +7,9 @@
 
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
 #define SetSettingBool(a_section, a_setting) ini.SetBoolValue(a_section, #a_setting, a_setting);
+
+#define GetSettingInt(a_section, a_setting, a_default) a_setting = ini.GetLongValue(a_section, #a_setting, a_default);
+#define SetSettingInt(a_section, a_setting) ini.SetLongValue(a_section, #a_setting, a_setting);
  
 
 std::vector<float> CameraNoiseManager::GetData(bool use_interpolation)
@@ -65,6 +68,9 @@ void CameraNoiseManager::LoadINI()
 	ini.LoadFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
 
 	GetSettingBool("Global", bEnabled, true);
+
+	GetSettingInt("Global", iInterpolationX, 3);
+	GetSettingInt("Global", iInterpolationY, 5);
 
 	GetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
 	GetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
@@ -133,6 +139,9 @@ void CameraNoiseManager::SaveINI()
 
 	SetSettingBool("Global", bEnabled);
 
+	SetSettingInt("Global", iInterpolationX);
+	SetSettingInt("Global", iInterpolationY);
+
 	SetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
 	SetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
 	SetSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3);
@@ -187,7 +196,7 @@ void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& cu
 void CameraNoiseManager::Interpolate()
 {
 	if (bInterpolation) {
-		if (interpolationCounter % 5 < 3) {
+		if (interpolationCounter % iInterpolationY < iInterpolationX) {
 			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
 			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
 			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
@@ -224,6 +233,8 @@ void CameraNoiseManager::RefreshUI()
 {
 	auto bar = g_ENB->TwGetBarByEnum(!REL::Module::IsVR() ? ENB_API::ENBWindowType::EditorBarEffects : ENB_API::ENBWindowType::EditorBarObjects);  // ENB misnames its own bar, whoops!
 	g_ENB->TwAddVarRW(bar, "EnableCameraNoise", ETwType::TW_TYPE_BOOLCPP, &bEnabled, TWDEF);
+	g_ENB->TwAddVarRW(bar, "InterpolationX", ETwType::TW_TYPE_UINT32, &iInterpolationX, TWDEF);
+	g_ENB->TwAddVarRW(bar, "InterpolationY", ETwType::TW_TYPE_UINT32, &iInterpolationY, TWDEF);
 
 	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency1, TWDEF2 " label = 'fFrequency1 (Translation)'");
 	g_ENB->TwAddVarRW(bar, "1PFrequency2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency2, TWDEF2 " label = 'fFrequency2 (Rotation)'");
