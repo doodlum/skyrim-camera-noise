@@ -102,7 +102,7 @@ bool CameraNoiseManager::CheckCustomINI(const std::string& strPath, bool a_isUnl
 	return false;
 }
 
-void CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading)
+bool CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading)
 {
 	std::string strPath = std::string(a_filepath.data());
 	if (CheckCustomINI(strPath, a_isUnloading)) {
@@ -130,6 +130,9 @@ void CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUn
 		ModInterpolation("ThirdPerson", "fAmplitude3", interpolation.second.fAmplitude3, modifier);
 
 		bInterpolation = true;
+		return true;
+	} else {
+		return false;
 	}
 }
 

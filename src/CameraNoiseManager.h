@@ -63,7 +63,7 @@ public:
 
 	std::shared_mutex fileLock;
 	void LoadINI();
-	void LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
+	bool LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
 	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
 

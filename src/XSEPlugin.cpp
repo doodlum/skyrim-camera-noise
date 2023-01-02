@@ -42,15 +42,13 @@ void Init()
 
 bool LoadINI(RE::StaticFunctionTag*, RE::BSFixedString filepath)
 {
-	CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, false);
-	return true;
+	return CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, false);
 }
 
 
 bool UnloadINI(RE::StaticFunctionTag*, RE::BSFixedString filepath)
 {
-	CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, true);
-	return true;
+	return CameraNoiseManager::GetSingleton()->LoadCustomINI(filepath, true);
 }
 
 bool ResetINI(RE::StaticFunctionTag*)
