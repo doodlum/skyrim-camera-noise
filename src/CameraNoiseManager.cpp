@@ -230,13 +230,12 @@ extern ENB_API::ENBSDKALT1001* g_ENB;
 #define TWDEF "group = 'MOD:Camera Noise' precision = 2 step = 0.01 "
 #define TWDEF2 "group = 'First Person' precision = 2 step = 0.01 "
 #define TWDEF3 "group = 'Third Person' precision = 2 step = 0.01 "
+#define TWDEF4 "group = 'Interpolation' precision = 2 step = 0.01 "
 
 void CameraNoiseManager::RefreshUI()
 {
 	auto bar = g_ENB->TwGetBarByEnum(!REL::Module::IsVR() ? ENB_API::ENBWindowType::EditorBarEffects : ENB_API::ENBWindowType::EditorBarObjects);  // ENB misnames its own bar, whoops!
 	g_ENB->TwAddVarRW(bar, "EnableCameraNoise", ETwType::TW_TYPE_BOOLCPP, &bEnabled, TWDEF);
-	g_ENB->TwAddVarRW(bar, "InterpolationX", ETwType::TW_TYPE_UINT32, &iInterpolationX, TWDEF);
-	g_ENB->TwAddVarRW(bar, "InterpolationY", ETwType::TW_TYPE_UINT32, &iInterpolationY, TWDEF);
 
 	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency1, TWDEF2 " label = 'fFrequency1 (Translation)'");
 	g_ENB->TwAddVarRW(bar, "1PFrequency2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency2, TWDEF2 " label = 'fFrequency2 (Rotation)'");
@@ -252,8 +251,12 @@ void CameraNoiseManager::RefreshUI()
 	g_ENB->TwAddVarRW(bar, "3PAmplitude2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude2, TWDEF3 " label = 'fAmplitude2 (Rotation)'");
 	g_ENB->TwAddVarRW(bar, "3PAmplitude3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude3, TWDEF3 " label = 'fAmplitude3 (Rotation)'");
 
+	g_ENB->TwAddVarRW(bar, "InterpolationX", ETwType::TW_TYPE_UINT32, &iInterpolationX, TWDEF4 " label = 'iInterpolationX (Interpolation)'");
+	g_ENB->TwAddVarRW(bar, "InterpolationY", ETwType::TW_TYPE_UINT32, &iInterpolationY, TWDEF4 " label = 'iInterpolationY (Interpolation)'");
+
 	g_ENB->TwDefine("EditorBarEffects/'First Person' group = 'MOD:Camera Noise'");
 	g_ENB->TwDefine("EditorBarEffects/'Third Person' group = 'MOD:Camera Noise'");
+	g_ENB->TwDefine("EditorBarEffects/'Interpolation' group = 'MOD:Camera Noise'");
 	g_ENB->TwDefine("EditorBarEffects/'MOD:Camera Noise' opened=false");
 }
 
