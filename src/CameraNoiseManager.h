@@ -38,10 +38,13 @@ public:
 	Settings FirstPerson;
 	Settings ThirdPerson;
 
+	bool bInterpolation = false;
+	std::pair<Settings, Settings> interpolation;
+
 	std::unordered_set<std::string> inis;
 	
 	std::vector<float> GetData();
-	void Set_Data(const std::vector<float>& _data);
+	void Set_Data(const std::vector<float>& _data, bool use_interpolation=false);
 
 	const siv::PerlinNoise perlin1{ 1 };
 	const siv::PerlinNoise perlin2{ 2 };
@@ -60,6 +63,12 @@ public:
 	void LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
 	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
+
+
+	bool CheckInterpolation();
+	float GetInterpolation(float i_value);
+	void ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::*field);
+	void Interpolate();
 
 	void Update(RE::TESCamera* a_camera);
 

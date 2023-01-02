@@ -1,7 +1,8 @@
 #include "CameraNoiseManager.h"
 
 #define GetSettingFloat(a_section, a_name, a_setting) a_setting = (float)ini.GetDoubleValue(a_section, a_name, 1.0f);
-#define ModSettingFloat(a_section, a_name, a_setting, a_modifier) a_setting = std::max(0.0f, a_setting + ((float)ini.GetDoubleValue(a_section, a_name, 1.0f) * a_modifier));
+#define ModSettingFloat(a_section, a_name, a_setting, a_modifier) a_setting = std::max(0.0f, a_setting + ((float)ini.GetDoubleValue(a_section, a_name, 0.0f) * a_modifier));
+#define ModInterpolation(a_section, a_name, a_setting, a_modifier) a_setting += ((float)ini.GetDoubleValue(a_section, a_name, 0.0f) * a_modifier);
 #define SetSettingFloat(a_section, a_name, a_setting) ini.SetDoubleValue(a_section, a_name, a_setting);
 
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
@@ -16,21 +17,37 @@ std::vector<float> CameraNoiseManager::GetData()
 								ThirdPerson.fAmplitude1, ThirdPerson.fAmplitude2, ThirdPerson.fAmplitude3};
 }
 
-void CameraNoiseManager::Set_Data(const std::vector<float>& _data)
+void CameraNoiseManager::Set_Data(const std::vector<float>& _data, bool use_interpolation)
 {
-	FirstPerson.fFrequency1 = _data[0];
-	FirstPerson.fFrequency2 = _data[1];
-	FirstPerson.fFrequency3 = _data[2];
-	FirstPerson.fAmplitude1 = _data[3];
-	FirstPerson.fAmplitude2 = _data[4];
-	FirstPerson.fAmplitude3 = _data[5];
+	if (!use_interpolation) {
+		FirstPerson.fFrequency1 = _data[0];
+		FirstPerson.fFrequency2 = _data[1];
+		FirstPerson.fFrequency3 = _data[2];
+		FirstPerson.fAmplitude1 = _data[3];
+		FirstPerson.fAmplitude2 = _data[4];
+		FirstPerson.fAmplitude3 = _data[5];
 
-	ThirdPerson.fFrequency1 = _data[6];
-	ThirdPerson.fFrequency2 = _data[7];
-	ThirdPerson.fFrequency3 = _data[8];
-	ThirdPerson.fAmplitude1 = _data[9];
-	ThirdPerson.fAmplitude2 = _data[10];
-	ThirdPerson.fAmplitude3 = _data[11];
+		ThirdPerson.fFrequency1 = _data[6];
+		ThirdPerson.fFrequency2 = _data[7];
+		ThirdPerson.fFrequency3 = _data[8];
+		ThirdPerson.fAmplitude1 = _data[9];
+		ThirdPerson.fAmplitude2 = _data[10];
+		ThirdPerson.fAmplitude3 = _data[11];
+	} else {
+		interpolation.first.fFrequency1 = _data[0];
+		interpolation.first.fFrequency2 = _data[1];
+		interpolation.first.fFrequency3 = _data[2];
+		interpolation.first.fAmplitude1 = _data[3];
+		interpolation.first.fAmplitude2 = _data[4];
+		interpolation.first.fAmplitude3 = _data[5];
+
+		interpolation.second.fFrequency1 = _data[6];
+		interpolation.second.fFrequency2 = _data[7];
+		interpolation.second.fFrequency3 = _data[8];
+		interpolation.second.fAmplitude1 = _data[9];
+		interpolation.second.fAmplitude2 = _data[10];
+		interpolation.second.fAmplitude3 = _data[11];
+	}
 }
 
 void CameraNoiseManager::LoadINI()
@@ -83,19 +100,21 @@ void CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUn
 
 		float modifier = a_isUnloading ? -1.0f : 1.0f;
 
-		ModSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1, modifier);
-		ModSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2, modifier);
-		ModSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3, modifier);
-		ModSettingFloat("FirstPerson", "fAmplitude1", FirstPerson.fAmplitude1, modifier);
-		ModSettingFloat("FirstPerson", "fAmplitude2", FirstPerson.fAmplitude2, modifier);
-		ModSettingFloat("FirstPerson", "fAmplitude3", FirstPerson.fAmplitude3, modifier);
+		ModInterpolation("FirstPerson", "fFrequency1", interpolation.first.fFrequency1, modifier);
+		ModInterpolation("FirstPerson", "fFrequency2", interpolation.first.fFrequency2, modifier);
+		ModInterpolation("FirstPerson", "fFrequency3", interpolation.first.fFrequency3, modifier);
+		ModInterpolation("FirstPerson", "fAmplitude1", interpolation.first.fAmplitude1, modifier);
+		ModInterpolation("FirstPerson", "fAmplitude2", interpolation.first.fAmplitude2, modifier);
+		ModInterpolation("FirstPerson", "fAmplitude3", interpolation.first.fAmplitude3, modifier);
 
-		ModSettingFloat("ThirdPerson", "fFrequency1", ThirdPerson.fFrequency1, modifier);
-		ModSettingFloat("ThirdPerson", "fFrequency2", ThirdPerson.fFrequency2, modifier);
-		ModSettingFloat("ThirdPerson", "fFrequency3", ThirdPerson.fFrequency3, modifier);
-		ModSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1, modifier);
-		ModSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2, modifier);
-		ModSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3, modifier);
+		ModInterpolation("ThirdPerson", "fFrequency1", interpolation.second.fFrequency1, modifier);
+		ModInterpolation("ThirdPerson", "fFrequency2", interpolation.second.fFrequency2, modifier);
+		ModInterpolation("ThirdPerson", "fFrequency3", interpolation.second.fFrequency3, modifier);
+		ModInterpolation("ThirdPerson", "fAmplitude1", interpolation.second.fAmplitude1, modifier);
+		ModInterpolation("ThirdPerson", "fAmplitude2", interpolation.second.fAmplitude2, modifier);
+		ModInterpolation("ThirdPerson", "fAmplitude3", interpolation.second.fAmplitude3, modifier);
+
+		bInterpolation = true;
 	}
 }
 
@@ -122,6 +141,63 @@ void CameraNoiseManager::SaveINI()
 	SetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
 
 	ini.SaveFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
+}
+
+bool CameraNoiseManager::CheckInterpolation() {
+	return interpolation.first.fFrequency1 == 0.0f && interpolation.first.fFrequency2 == 0.0f && interpolation.first.fFrequency3 == 0.0f &&
+		interpolation.first.fAmplitude1 == 0.0f && interpolation.first.fAmplitude2 == 0.0f && interpolation.first.fAmplitude3 == 0.0f &&
+		interpolation.second.fFrequency1 == 0.0f && interpolation.second.fFrequency2 == 0.0f && interpolation.second.fFrequency3 == 0.0f &&
+		interpolation.second.fAmplitude1 == 0.0f && interpolation.second.fAmplitude2 == 0.0f && interpolation.second.fAmplitude3 == 0.0f;
+}
+
+float CameraNoiseManager::GetInterpolation(float i_value) {
+	if (i_value > 0.0f) {
+		if (i_value >= 1.0f) {
+			return 1.0f;
+		} else {
+			return i_value;
+		}
+	} else {
+		if (i_value < 0.0f) {
+			if (i_value <= 1.0f) {
+				return -1.0f;
+			} else {
+				return i_value;
+			}
+		}
+	}
+	return 0.0f;
+}
+
+void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::* field) {
+	float modifier = GetInterpolation(currInterpolation.*field);
+	if (modifier != 0.0f) {
+		currSettings.*field -= modifier;
+		currInterpolation.*field -= modifier;
+	}
+}
+
+void CameraNoiseManager::Interpolate()
+{
+	if (bInterpolation) {
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
+		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
+
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
+		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
+
+		if (CheckInterpolation()) {
+			bInterpolation = false;
+		}
+	}
 }
 
 extern ENB_API::ENBSDKALT1001* g_ENB;
@@ -200,6 +276,8 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 {
 	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused()) {
 		static float& g_deltaTime = (*(float*)RELOCATION_ID(523660, 410199).address());
+
+		Interpolate();
 
 		Settings settings = RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? FirstPerson : ThirdPerson;
 
