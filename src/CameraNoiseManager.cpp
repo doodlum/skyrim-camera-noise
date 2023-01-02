@@ -71,7 +71,7 @@ void CameraNoiseManager::LoadINI()
 
 	GetSettingBool("Global", bEnabled, true);
 
-	GetSettingInt("Global", iInterpolationX, 3);
+	GetSettingInt("Global", iInterpolationX, 4);
 	GetSettingInt("Global", iInterpolationY, 5);
 
 	GetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);

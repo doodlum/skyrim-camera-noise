@@ -40,7 +40,7 @@ public:
 
 	bool bInterpolation = false;
 	uint32_t interpolationCounter = 0;
-	uint32_t iInterpolationX = 3;
+	uint32_t iInterpolationX = 4;
 	uint32_t iInterpolationY = 5;
 	std::pair<Settings, Settings> interpolation;
 
