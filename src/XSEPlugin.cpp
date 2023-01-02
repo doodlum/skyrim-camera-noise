@@ -34,6 +34,9 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 void Init()
 {
 	SKSE::GetMessagingInterface()->RegisterListener(MessageHandler);
+	std::vector<float> interp(12);
+	std::fill(interp.begin(), interp.end(), 0.0f);
+	CameraNoiseManager::GetSingleton()->Set_Data(interp, true);
 	Hooks::Install();
 }
 
