@@ -9,12 +9,19 @@
 #define SetSettingBool(a_section, a_setting) ini.SetBoolValue(a_section, #a_setting, a_setting);
  
 
-std::vector<float> CameraNoiseManager::GetData()
+std::vector<float> CameraNoiseManager::GetData(bool use_interpolation)
 {
-	return std::vector<float>{FirstPerson.fFrequency1, FirstPerson.fFrequency2, FirstPerson.fFrequency3,
-								FirstPerson.fAmplitude1, FirstPerson.fAmplitude2, FirstPerson.fAmplitude3,
-								ThirdPerson.fFrequency1, ThirdPerson.fFrequency2, ThirdPerson.fFrequency3,
-								ThirdPerson.fAmplitude1, ThirdPerson.fAmplitude2, ThirdPerson.fAmplitude3};
+	if (!use_interpolation) {
+		return std::vector<float>{ FirstPerson.fFrequency1, FirstPerson.fFrequency2, FirstPerson.fFrequency3,
+			FirstPerson.fAmplitude1, FirstPerson.fAmplitude2, FirstPerson.fAmplitude3,
+			ThirdPerson.fFrequency1, ThirdPerson.fFrequency2, ThirdPerson.fFrequency3,
+			ThirdPerson.fAmplitude1, ThirdPerson.fAmplitude2, ThirdPerson.fAmplitude3 };
+	} else {
+		return std::vector<float>{ interpolation.first.fFrequency1, interpolation.first.fFrequency2, interpolation.first.fFrequency3,
+			interpolation.first.fAmplitude1, interpolation.first.fAmplitude2, interpolation.first.fAmplitude3,
+			interpolation.second.fFrequency1, interpolation.second.fFrequency2, interpolation.second.fFrequency3,
+			interpolation.second.fAmplitude1, interpolation.second.fAmplitude2, interpolation.second.fAmplitude3 };
+	}
 }
 
 void CameraNoiseManager::Set_Data(const std::vector<float>& _data, bool use_interpolation)

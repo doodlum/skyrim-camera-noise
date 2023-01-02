@@ -43,7 +43,7 @@ public:
 
 	std::unordered_set<std::string> inis;
 	
-	std::vector<float> GetData();
+	std::vector<float> GetData(bool use_interpolation=false);
 	void Set_Data(const std::vector<float>& _data, bool use_interpolation=false);
 
 	const siv::PerlinNoise perlin1{ 1 };

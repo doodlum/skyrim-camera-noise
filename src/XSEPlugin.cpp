@@ -68,23 +68,36 @@ bool RegisterFuncs(RE::BSScript::IVirtualMachine* a_vm)
 	return true;
 }
 
-void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
+void WriteNoiseData(SKSE::SerializationInterface* a_intfc, std::vector<float>& noise_data, uint32_t label) 
 {
-	std::vector<float> _data = CameraNoiseManager::GetSingleton()->GetData();
-	if (!a_intfc->OpenRecord('ARR_', 1)) {
+	if (!a_intfc->OpenRecord(label, 1)) {
 		logger::error("Failed to open record for noise data.");
 	} else {
-		std::size_t size = _data.size();
+		std::size_t size = noise_data.size();
 		if (!a_intfc->WriteRecordData(size)) {
 			logger::error("Failed to write size for noise data.");
 		} else {
-			for (float& value : _data) {
+			for (float& value : noise_data) {
 				if (!a_intfc->WriteRecordData(value)) {
 					logger::error("Failed to write value(s) for noise data.");
 					break;
 				}
 			}
 		}
+	}
+}
+
+void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
+{
+	std::vector<float> _data = CameraNoiseManager::GetSingleton()->GetData();
+	WriteNoiseData(a_intfc, _data, 'ARR_');
+
+	if (CameraNoiseManager::GetSingleton()->bInterpolation) {
+		if (!a_intfc->WriteRecord('ITB_', 1, CameraNoiseManager::GetSingleton()->bInterpolation)) {
+			logger::error("Failed to write interpolation.");
+		}
+		std::vector<float> _interp_data = CameraNoiseManager::GetSingleton()->GetData(true);
+		WriteNoiseData(a_intfc, _interp_data, 'ITR_');
 	}
 
 	std::unordered_set<std::string> inis = CameraNoiseManager::GetSingleton()->inis;
@@ -111,9 +124,28 @@ void SaveNoiseData(SKSE::SerializationInterface* a_intfc)
 	}
 }
 
+void ReadNoiseData(SKSE::SerializationInterface* a_intfc, std::vector<float>& noise_data)
+{
+	std::size_t size;
+	if (!a_intfc->ReadRecordData(size)) {
+		logger::error("Failed to load size of noise data.");
+	} else {
+		for (std::uint32_t i = 0; i < size; i++) {
+			float value;
+			if (!a_intfc->ReadRecordData(value)) {
+				logger::error("Failed to load value(s) of noise data.");
+			} else {
+				noise_data.push_back(value);
+			}
+		}
+	}
+}
+
 void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 {
 	std::vector<float> _data;
+	bool was_interpolating = false;
+	std::vector<float> _interp_data;
 	std::unordered_set<std::string> _inis;
 
 	std::uint32_t type;
@@ -122,19 +154,15 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 	while (a_intfc->GetNextRecordInfo(type, version, length)) {
 		switch (type) {
 		case 'ARR_':
-			std::size_t size;
-			if (!a_intfc->ReadRecordData(size)) {
-				logger::error("Failed to load size of noise data.");
-			} else {
-				for (std::uint32_t i = 0; i < size; i++) {
-					float value;
-					if (!a_intfc->ReadRecordData(value)) {
-						logger::error("Failed to load value(s) of noise data.");
-					} else {
-						_data.push_back(value);
-					}
-				}
+			ReadNoiseData(a_intfc, _data);
+			break;
+		case 'ITB_':
+			if (!a_intfc->ReadRecordData(was_interpolating)) {
+				logger::error("Failed to load interpolation.");
 			}
+			break;
+		case 'ITR_':
+			ReadNoiseData(a_intfc, _interp_data);
 			break;
 		case 'INI_':
 			std::size_t iniSize;
@@ -168,6 +196,13 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 
 	if (!_data.empty()) {
 		CameraNoiseManager::GetSingleton()->Set_Data(_data);
+	}
+
+	if (was_interpolating) {
+		CameraNoiseManager::GetSingleton()->bInterpolation = true;
+		if (!_interp_data.empty()) {
+			CameraNoiseManager::GetSingleton()->Set_Data(_interp_data, true);
+		}
 	}
 
 	if (!_inis.empty()) {
