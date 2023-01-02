@@ -24,7 +24,7 @@ std::vector<float> CameraNoiseManager::GetData(bool use_interpolation)
 	}
 }
 
-void CameraNoiseManager::Set_Data(const std::vector<float>& _data, bool use_interpolation)
+void CameraNoiseManager::SetData(const std::vector<float>& _data, bool use_interpolation)
 {
 	if (!use_interpolation) {
 		FirstPerson.fFrequency1 = _data[0];
@@ -187,22 +187,29 @@ void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& cu
 void CameraNoiseManager::Interpolate()
 {
 	if (bInterpolation) {
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
-		ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
+		if (interpolationCounter % 5 < 3) {
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
+			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
 
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
-		ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
+			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
 
-		if (CheckInterpolation()) {
-			bInterpolation = false;
+			if (CheckInterpolation()) {
+				bInterpolation = false;
+				interpolationCounter = 0;
+			} else {
+				interpolationCounter += 1;
+			}
+		} else {
+			interpolationCounter += 1;
 		}
 	}
 }

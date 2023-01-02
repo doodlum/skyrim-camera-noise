@@ -39,12 +39,13 @@ public:
 	Settings ThirdPerson;
 
 	bool bInterpolation = false;
+	uint32_t interpolationCounter = 0;
 	std::pair<Settings, Settings> interpolation;
 
 	std::unordered_set<std::string> inis;
 	
 	std::vector<float> GetData(bool use_interpolation=false);
-	void Set_Data(const std::vector<float>& _data, bool use_interpolation=false);
+	void SetData(const std::vector<float>& _data, bool use_interpolation = false);
 
 	const siv::PerlinNoise perlin1{ 1 };
 	const siv::PerlinNoise perlin2{ 2 };
