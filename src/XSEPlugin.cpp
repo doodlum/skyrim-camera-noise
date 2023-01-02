@@ -36,7 +36,7 @@ void Init()
 	SKSE::GetMessagingInterface()->RegisterListener(MessageHandler);
 	std::vector<float> interp(12);
 	std::fill(interp.begin(), interp.end(), 0.0f);
-	CameraNoiseManager::GetSingleton()->Set_Data(interp, true);
+	CameraNoiseManager::GetSingleton()->SetData(interp, true);
 	Hooks::Install();
 }
 
@@ -195,13 +195,13 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 	}
 
 	if (!_data.empty()) {
-		CameraNoiseManager::GetSingleton()->Set_Data(_data);
+		CameraNoiseManager::GetSingleton()->SetData(_data);
 	}
 
 	if (was_interpolating) {
 		CameraNoiseManager::GetSingleton()->bInterpolation = true;
 		if (!_interp_data.empty()) {
-			CameraNoiseManager::GetSingleton()->Set_Data(_interp_data, true);
+			CameraNoiseManager::GetSingleton()->SetData(_interp_data, true);
 		}
 	}
 
