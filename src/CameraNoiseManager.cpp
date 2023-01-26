@@ -10,8 +10,8 @@
 #define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
 #define SetSettingBool(a_section, a_setting) ini.SetBoolValue(a_section, #a_setting, a_setting);
 
-#define GetSettingInt(a_section, a_setting, a_default) a_setting = ini.GetLongValue(a_section, #a_setting, a_default);
-#define SetSettingInt(a_section, a_setting) ini.SetLongValue(a_section, #a_setting, a_setting);
+#define GetSettingInt(a_section, a_name, a_setting) a_setting = (uint32_t)ini.GetLongValue(a_section, a_name, 1);
+#define SetSettingInt(a_section, a_name, a_setting) ini.SetLongValue(a_section, a_name, a_setting);
  
 
 std::vector<float> CameraNoiseManager::GetData(bool use_interpolation)
@@ -71,9 +71,6 @@ void CameraNoiseManager::LoadINI()
 
 	GetSettingBool("Global", bEnabled, true);
 
-	GetSettingInt("Global", iInterpolationX, 4);
-	GetSettingInt("Global", iInterpolationY, 5);
-
 	GetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
 	GetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
 	GetSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3);
@@ -87,6 +84,9 @@ void CameraNoiseManager::LoadINI()
 	GetSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1);
 	GetSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2);
 	GetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
+
+	GetSettingInt("Interpolation", "iInterpolationX", iInterpolationX);
+	GetSettingInt("Interpolation", "iInterpolationY", iInterpolationY);
 }
 
 bool CameraNoiseManager::CheckCustomINI(const std::string& strPath, bool a_isUnloading) {
@@ -144,9 +144,6 @@ void CameraNoiseManager::SaveINI()
 
 	SetSettingBool("Global", bEnabled);
 
-	SetSettingInt("Global", iInterpolationX);
-	SetSettingInt("Global", iInterpolationY);
-
 	SetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
 	SetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
 	SetSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3);
@@ -160,6 +157,9 @@ void CameraNoiseManager::SaveINI()
 	SetSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1);
 	SetSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2);
 	SetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
+
+	SetSettingInt("Interpolation", "iInterpolationX", iInterpolationX);
+	SetSettingInt("Interpolation", "iInterpolationY", iInterpolationY);
 
 	ini.SaveFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
 }
@@ -307,7 +307,7 @@ void UpdateInternalWorldToScreenMatrix(RE::NiCamera* a_niCamera)
 
 void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 {
-	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused()) {
+	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused() && !RE::UI::GetSingleton()->IsMenuOpen("MapMenu")) {
 		static float& g_deltaTime = (*(float*)RELOCATION_ID(523660, 410199).address());
 
 		Interpolate();

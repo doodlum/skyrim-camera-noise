@@ -192,7 +192,7 @@ void LoadNoiseData(SKSE::SerializationInterface* a_intfc)
 		}
 	}
 
-	if (!_data.empty()) {
+	if (!_data.empty() && (!_inis.empty() || was_interpolating)) {
 		CameraNoiseManager::GetSingleton()->SetData(_data);
 	}
 
