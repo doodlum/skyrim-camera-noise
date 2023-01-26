@@ -67,7 +67,6 @@ public:
 	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
 
-	void SetInterpolationOffset();
 	bool CheckInterpolation();
 	float GetInterpolation(float i_value);
 	void ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::*field);
