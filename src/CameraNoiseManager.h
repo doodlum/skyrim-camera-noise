@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <shared_mutex>
+#include <unordered_set>
 
 #include <SimpleINI.h>
 
@@ -37,6 +38,17 @@ public:
 	Settings FirstPerson;
 	Settings ThirdPerson;
 
+	bool bInterpolation = false;
+	uint32_t interpolationCounter = 0;
+	uint32_t iInterpolationX = 4;
+	uint32_t iInterpolationY = 5;
+	std::pair<Settings, Settings> interpolation;
+
+	std::unordered_set<std::string> inis;
+	
+	std::vector<float> GetData(bool use_interpolation=false);
+	void SetData(const std::vector<float>& _data, bool use_interpolation = false);
+
 	const siv::PerlinNoise perlin1{ 1 };
 	const siv::PerlinNoise perlin2{ 2 };
 	const siv::PerlinNoise perlin3{ 3 };
@@ -51,7 +63,14 @@ public:
 
 	std::shared_mutex fileLock;
 	void LoadINI();
+	bool LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading);
+	bool CheckCustomINI(const std::string& strPath, bool a_isUnloading);
 	void SaveINI();
+
+	bool CheckInterpolation();
+	float GetInterpolation(float i_value);
+	void ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::*field);
+	void Interpolate();
 
 	void Update(RE::TESCamera* a_camera);
 
