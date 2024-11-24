@@ -1,11 +1,12 @@
 #pragma once
 
+#include <Windows.h>
 #include <psapi.h>
 
-#include "ENBSeriesSDK.h"
+#include "enbseries.h"
 #include "AntTweakBar.h"
 
-using namespace ENB_SDK;
+//using namespace ENB_SDK;
 
 namespace ENB_API
 {

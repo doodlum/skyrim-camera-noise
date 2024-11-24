@@ -1,10 +1,8 @@
+#include <glm/gtc/constants.hpp>
 #include "CameraNoiseManager.h"
+#include "IniHandler.h"
 
-#define GetSettingFloat(a_section, a_name, a_setting) a_setting = (float)ini.GetDoubleValue(a_section, a_name, 1.0f);
-#define SetSettingFloat(a_section, a_name, a_setting) ini.SetDoubleValue(a_section, a_name, a_setting);
-
-#define GetSettingBool(a_section, a_setting, a_default) a_setting = ini.GetBoolValue(a_section, #a_setting, a_default);
-#define SetSettingBool(a_section, a_setting) ini.SetBoolValue(a_section, #a_setting, a_setting);
+#include "ENB/enbseries.h"
 
 void CameraNoiseManager::LoadINI()
 {
@@ -12,22 +10,42 @@ void CameraNoiseManager::LoadINI()
 	CSimpleIniA ini;
 	ini.SetUnicode();
 	ini.LoadFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
+	IniHandler::GetSingleton()->GetAllSettings(ini, this);
+}
 
-	GetSettingBool("Global", bEnabled, true);
+bool CameraNoiseManager::CheckCustomINI(const std::string& strPath, bool a_isUnloading) {
+	if (a_isUnloading && inis.contains(strPath)) {
+		inis.erase(strPath);
+		return true;
+	} else {
+		if (!a_isUnloading && !inis.contains(strPath)) {
+			inis.insert(strPath);
+			return true;
+		}
+	}
+	return false;
+}
 
-	GetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
-	GetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
-	GetSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3);
-	GetSettingFloat("FirstPerson", "fAmplitude1", FirstPerson.fAmplitude1);
-	GetSettingFloat("FirstPerson", "fAmplitude2", FirstPerson.fAmplitude2);
-	GetSettingFloat("FirstPerson", "fAmplitude3", FirstPerson.fAmplitude3);
+bool CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUnloading)
+{
+	std::string strPath = std::string(a_filepath.data());
+	if (CheckCustomINI(strPath, a_isUnloading)) {
+		std::lock_guard<std::shared_mutex> lk(fileLock);
+		CSimpleIniA ini;
+		ini.SetUnicode();
+		std::string fullPath = "Data\\SKSE\\Plugins\\_CameraNoise\\" + strPath;
+		std::wstring widestr = std::wstring(fullPath.begin(), fullPath.end());
+		ini.LoadFile(widestr.c_str());
 
-	GetSettingFloat("ThirdPerson", "fFrequency1", ThirdPerson.fFrequency1);
-	GetSettingFloat("ThirdPerson", "fFrequency2", ThirdPerson.fFrequency2);
-	GetSettingFloat("ThirdPerson", "fFrequency3", ThirdPerson.fFrequency3);
-	GetSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1);
-	GetSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2);
-	GetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
+		float modifier = a_isUnloading ? -1.0f : 1.0f;
+		IniHandler::GetSingleton()->ModAllSettings(ini, this, modifier);
+		interpolationTransitionSpeed = (int)ini.GetDoubleValue("Settings", "iTransitionSpeed", 1);
+		bInterpolation = true;
+		
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void CameraNoiseManager::SaveINI()
@@ -35,54 +53,126 @@ void CameraNoiseManager::SaveINI()
 	std::lock_guard<std::shared_mutex> lk(fileLock);
 	CSimpleIniA ini;
 	ini.SetUnicode();
-
-	SetSettingBool("Global", bEnabled);
-
-	SetSettingFloat("FirstPerson", "fFrequency1", FirstPerson.fFrequency1);
-	SetSettingFloat("FirstPerson", "fFrequency2", FirstPerson.fFrequency2);
-	SetSettingFloat("FirstPerson", "fFrequency3", FirstPerson.fFrequency3);
-	SetSettingFloat("FirstPerson", "fAmplitude1", FirstPerson.fAmplitude1);
-	SetSettingFloat("FirstPerson", "fAmplitude2", FirstPerson.fAmplitude2);
-	SetSettingFloat("FirstPerson", "fAmplitude3", FirstPerson.fAmplitude3);
-
-	SetSettingFloat("ThirdPerson", "fFrequency1", ThirdPerson.fFrequency1);
-	SetSettingFloat("ThirdPerson", "fFrequency2", ThirdPerson.fFrequency2);
-	SetSettingFloat("ThirdPerson", "fFrequency3", ThirdPerson.fFrequency3);
-	SetSettingFloat("ThirdPerson", "fAmplitude1", ThirdPerson.fAmplitude1);
-	SetSettingFloat("ThirdPerson", "fAmplitude2", ThirdPerson.fAmplitude2);
-	SetSettingFloat("ThirdPerson", "fAmplitude3", ThirdPerson.fAmplitude3);
-
+	IniHandler::GetSingleton()->SetAllSettings(ini, this);
 	ini.SaveFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
 }
 
-extern ENB_API::ENBSDKALT1001* g_ENB;
+void CameraNoiseManager::ResetINIs() {
+	CameraNoiseManager::GetSingleton()->LoadINI();
+	CameraNoiseManager::GetSingleton()->inis.clear();
+}
 
-#define TWDEF "group = 'MOD:Camera Noise' precision = 2 step = 0.01 "
-#define TWDEF2 "group = 'First Person' precision = 2 step = 0.01 "
-#define TWDEF3 "group = 'Third Person' precision = 2 step = 0.01 "
+bool CameraNoiseManager::InterpolationHasEnded() {
+	return interpolation.first.fFrequency1 == 0.0f && interpolation.first.fFrequency2 == 0.0f && interpolation.first.fFrequency3 == 0.0f &&
+		interpolation.first.fAmplitude1 == 0.0f && interpolation.first.fAmplitude2 == 0.0f && interpolation.first.fAmplitude3 == 0.0f &&
+		interpolation.second.fFrequency1 == 0.0f && interpolation.second.fFrequency2 == 0.0f && interpolation.second.fFrequency3 == 0.0f &&
+		interpolation.second.fAmplitude1 == 0.0f && interpolation.second.fAmplitude2 == 0.0f && interpolation.second.fAmplitude3 == 0.0f;
+}
 
-void CameraNoiseManager::RefreshUI()
+void CameraNoiseManager::SetInterpolation(const std::vector<float>& _data, bool use_interpolation) {
+	if (!use_interpolation) {
+		FirstPerson.fFrequency1 = _data[0];
+		FirstPerson.fFrequency2 = _data[1];
+		FirstPerson.fFrequency3 = _data[2];
+		FirstPerson.fAmplitude1 = _data[3];
+		FirstPerson.fAmplitude2 = _data[4];
+		FirstPerson.fAmplitude3 = _data[5];
+
+		ThirdPerson.fFrequency1 = _data[6];
+		ThirdPerson.fFrequency2 = _data[7];
+		ThirdPerson.fFrequency3 = _data[8];
+		ThirdPerson.fAmplitude1 = _data[9];
+		ThirdPerson.fAmplitude2 = _data[10];
+		ThirdPerson.fAmplitude3 = _data[11];
+	} else {
+		interpolation.first.fFrequency1 = _data[0];
+		interpolation.first.fFrequency2 = _data[1];
+		interpolation.first.fFrequency3 = _data[2];
+		interpolation.first.fAmplitude1 = _data[3];
+		interpolation.first.fAmplitude2 = _data[4];
+		interpolation.first.fAmplitude3 = _data[5];
+
+		interpolation.second.fFrequency1 = _data[6];
+		interpolation.second.fFrequency2 = _data[7];
+		interpolation.second.fFrequency3 = _data[8];
+		interpolation.second.fAmplitude1 = _data[9];
+		interpolation.second.fAmplitude2 = _data[10];
+		interpolation.second.fAmplitude3 = _data[11];
+	}
+}
+
+float CameraNoiseManager::GetInterpolation(float i_value) {
+	if (i_value == 0.0f) {
+		return 0.0f;
+	} else if (i_value > 0.0f) {
+		if (i_value >= 1.0f) {
+			return 1.0f;
+		} else {
+			return i_value;
+		}
+	} else {
+		if (i_value <= 1.0f) {
+			return -1.0f;
+		} else {
+			return i_value;
+		}
+	}
+}
+
+void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::* field) {
+	float modifier = GetInterpolation(currInterpolation.*field);
+	if (modifier != 0.0f) {
+		currSettings.*field -= modifier;
+		currInterpolation.*field -= modifier;
+	}
+}
+
+void CameraNoiseManager::ApplyInterpolations() {
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
+
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
+}
+
+void CameraNoiseManager::CheckInterpolate() {
+	if (interpolationCounter % iInterpolationY < iInterpolationX) {
+		ApplyInterpolations();
+		if (InterpolationHasEnded()) {
+			bInterpolation = false;
+			interpolationCounter = 0;
+		} else {
+			interpolationCounter += 1;
+		}
+	} else {
+		interpolationCounter += 1;
+	}
+}
+
+void CameraNoiseManager::Interpolate()
 {
-	auto bar = g_ENB->TwGetBarByEnum(!REL::Module::IsVR() ? ENB_API::ENBWindowType::EditorBarEffects : ENB_API::ENBWindowType::EditorBarObjects);  // ENB misnames its own bar, whoops!
-	g_ENB->TwAddVarRW(bar, "EnableCameraNoise", ETwType::TW_TYPE_BOOLCPP, &bEnabled, TWDEF);
-
-	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency1, TWDEF2 " label = 'fFrequency1 (Translation)'");
-	g_ENB->TwAddVarRW(bar, "1PFrequency2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency2, TWDEF2 " label = 'fFrequency2 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "1PFrequency3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fFrequency3, TWDEF2 " label = 'fFrequency3 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude1", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude1, TWDEF2 " label = 'fAmplitude1 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude2", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude2, TWDEF2 " label = 'fAmplitude2 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "1PAmplitude3", ETwType::TW_TYPE_FLOAT, &FirstPerson.fAmplitude3, TWDEF2 " label = 'fAmplitude3 (Rotation)'");
-
-	g_ENB->TwAddVarRW(bar, "3PFrequency1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency1, TWDEF3 " label = 'fFrequency1 (Translation)'");
-	g_ENB->TwAddVarRW(bar, "3PFrequency2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency2, TWDEF3 " label = 'fFrequency2 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "3PFrequency3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fFrequency3, TWDEF3 " label = 'fFrequency3 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude1", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude1, TWDEF3 " label = 'fAmplitude1 (Translation)'");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude2", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude2, TWDEF3 " label = 'fAmplitude2 (Rotation)'");
-	g_ENB->TwAddVarRW(bar, "3PAmplitude3", ETwType::TW_TYPE_FLOAT, &ThirdPerson.fAmplitude3, TWDEF3 " label = 'fAmplitude3 (Rotation)'");
-
-	g_ENB->TwDefine("EditorBarEffects/'First Person' group = 'MOD:Camera Noise'");
-	g_ENB->TwDefine("EditorBarEffects/'Third Person' group = 'MOD:Camera Noise'");
-	g_ENB->TwDefine("EditorBarEffects/'MOD:Camera Noise' opened=false");
+	if (bInterpolation) {
+		if (interpolationTransitionSpeed > 0) {
+			for (int idx = 0; idx < interpolationTransitionSpeed; idx++) {
+				CheckInterpolate();
+			}
+		} else {
+			if (interpolationTransitionIdx <= interpolationTransitionSpeed) {
+				interpolationTransitionIdx = 0;
+				CheckInterpolate();
+			} else {
+				interpolationTransitionIdx -= 1;
+			}
+		}
+	}
 }
 
 RE::NiMatrix3 MatrixFromAxisAngle(const RE::NiPoint3& axis, float theta)
@@ -129,8 +219,10 @@ void UpdateInternalWorldToScreenMatrix(RE::NiCamera* a_niCamera)
 
 void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 {
-	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused()) {
+	if (bEnabled && !RE::UI::GetSingleton()->GameIsPaused() && !RE::UI::GetSingleton()->IsMenuOpen("MapMenu")) {
 		static float& g_deltaTime = (*(float*)RELOCATION_ID(523660, 410199).address());
+
+		Interpolate();
 
 		Settings settings = RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? FirstPerson : ThirdPerson;
 
@@ -153,7 +245,8 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin5.noise1D(timeElapsed2) * glm::two_pi<float>()
 		};
 
-		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset, 0.00015f * settings.fAmplitude2);
+		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset, 
+			0.00015f * settings.fAmplitude2);
 
 		RE::NiPoint3 rotationOffset2 = {
 			(float)perlin5.noise1D(timeElapsed3) * glm::two_pi<float>(),
@@ -161,7 +254,8 @@ void CameraNoiseManager::Update(RE::TESCamera* a_camera)
 			(float)perlin7.noise1D(timeElapsed3) * glm::two_pi<float>()
 		};
 
-		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 0.00005f * settings.fAmplitude3);
+		a_camera->cameraRoot->local.rotate = a_camera->cameraRoot->local.rotate * MatrixFromAxisAngle(rotationOffset2, 
+			0.00005f * settings.fAmplitude3);
 
 		RE::NiUpdateData updateData;
 		a_camera->cameraRoot->UpdateDownwardPass(updateData, 0);

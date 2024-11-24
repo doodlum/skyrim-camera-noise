@@ -1,47 +1,30 @@
 #pragma once
 
 #pragma warning(push)
-#pragma warning(disable : 5105)
-#pragma warning(disable : 4189)
 #if defined(FALLOUT4)
-#include "F4SE/F4SE.h"
-#include "RE/Fallout.h"
-#define SKSE F4SE
-#define SKSEAPI F4SEAPI
-#define SKSEPlugin_Load F4SEPlugin_Load
-#define SKSEPlugin_Query F4SEPlugin_Query
-#define RUNTIME RUNTIME_1_10_163
+#	include "F4SE/F4SE.h"
+#	include "RE/Fallout.h"
+#	define SKSE F4SE
+#	define SKSEAPI F4SEAPI
+#	define SKSEPlugin_Load F4SEPlugin_Load
+#	define SKSEPlugin_Query F4SEPlugin_Query
 #else
-#include "RE/Skyrim.h"
-#include "SKSE/SKSE.h"
-#if defined(SKYRIMAE)
-#define RUNTIME 0
-#elif defined(SKYRIMVR)
-#define RUNTIME SKSE::RUNTIME_VR_1_4_15_1
-#else
-#define RUNTIME SKSE::RUNTIME_1_5_97
+#	define SKSE_SUPPORT_XBYAK
+#	include "RE/Skyrim.h"
+#	include "SKSE/SKSE.h"
+#	include <xbyak/xbyak.h>
 #endif
-#endif
-
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/easing.hpp>
-#include <glm/gtx/hash.hpp>
-#include <glm/gtx/norm.hpp>
-#include <glm/gtx/spline.hpp>
-
-#include <Windows.h>
 
 #ifdef NDEBUG
-#include <spdlog/sinks/basic_file_sink.h>
+#	include <spdlog/sinks/basic_file_sink.h>
 #else
-#include <spdlog/sinks/msvc_sink.h>
+#	include <spdlog/sinks/msvc_sink.h>
 #endif
 
 #pragma warning(pop)
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 using namespace std::literals;
 
@@ -53,7 +36,6 @@ namespace stl
 	void write_thunk_call(std::uintptr_t a_src)
 	{
 		SKSE::AllocTrampoline(14);
-
 		auto& trampoline = SKSE::GetTrampoline();
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
@@ -71,9 +53,18 @@ namespace stl
 		REL::Relocation<std::uintptr_t> vtbl{ id };
 		T::func = vtbl.write_vfunc(idx, T::thunk);
 	}
+
+	template <class T>
+	void write_thunk_jmp(std::uintptr_t a_src)
+	{
+		SKSE::AllocTrampoline(14);
+		auto& trampoline = SKSE::GetTrampoline();
+		T::func = trampoline.write_branch<5>(a_src, T::thunk);
+	}
 }
 
 namespace logger = SKSE::log;
+namespace WinAPI = SKSE::WinAPI;
 
 namespace util
 {
@@ -84,9 +75,90 @@ namespace util
 
 #include "Plugin.h"
 
-#define _MESSAGE logger::info
-#define _DMESSAGE logger::debug
-#define _ERROR logger::error
-#define _FATALERROR logger::critical
+#include "CameraNoise_API.h"
+#include "ModAPI.h"
+#include "PapyrusAPI.h"
+#include "Serialization.h"
 
-#define UInt32 uint32_t
+bool SetupHooks();
+void MessageHandler(SKSE::MessagingInterface::Message* a_msg);
+
+void InitializeLog()
+{
+#ifndef NDEBUG
+	auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+#else
+	auto path = logger::log_directory();
+	if (!path) {
+		util::report_and_fail("Failed to find standard logging directory"sv);
+	}
+
+	*path /= std::format("{}.log"sv, Plugin::NAME);
+	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+#endif
+
+#ifndef NDEBUG
+	const auto level = spdlog::level::trace;
+#else
+	const auto level = spdlog::level::info;
+#endif
+
+	auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
+	log->set_level(level);
+	log->flush_on(spdlog::level::info);
+
+	spdlog::set_default_logger(std::move(log));
+	spdlog::set_pattern("%v"s);
+}
+
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
+{
+#ifndef NDEBUG
+	while (!WinAPI::IsDebuggerPresent()) {};
+#endif
+	InitializeLog();
+	logger::info("Loaded plugin");
+	SKSE::Init(a_skse);
+	SKSE::GetMessagingInterface()->RegisterListener(MessageHandler);
+	PapyrusAPI::SetupAPI();
+	auto serialization = SKSE::GetSerializationInterface();
+	serialization->SetUniqueID(Serialization::kUniqueID);
+	//serialization->SetSaveCallback(Serialization::SaveCallback);
+	serialization->SetLoadCallback(Serialization::LoadCallback);
+	serialization->SetRevertCallback(Serialization::RevertCallback);
+	return SetupHooks();
+}
+
+extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() noexcept {
+	SKSE::PluginVersionData v;
+	v.PluginName(Plugin::NAME.data());
+	v.PluginVersion(Plugin::VERSION);
+	v.UsesAddressLibrary(true);
+	v.HasNoStructUse();
+	return v;
+}();
+
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo* pluginInfo)
+{
+	pluginInfo->name = SKSEPlugin_Version.pluginName;
+	pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
+	pluginInfo->version = SKSEPlugin_Version.pluginVersion;
+	return true;
+}
+
+extern "C" DLLEXPORT void* SKSEAPI RequestPluginAPI(const CameraNoise_API::InterfaceVersion a_interfaceVersion)
+{ 
+	const auto api = CameraNoiseInterfaceImpl::GetSingleton();
+
+	logger::info("CameraNoise::RequestPluginAPI called, InterfaceVersion {}", 
+		static_cast<std::underlying_type<CameraNoise_API::InterfaceVersion>::type>(a_interfaceVersion));
+
+	switch (a_interfaceVersion) {
+	case CameraNoise_API::InterfaceVersion::V1:
+		logger::info("CameraNoise::RequestPluginAPI returned the API singleton");
+		return api;
+	}
+
+	logger::info("CameraNoise::RequestPluginAPI requested the wrong interface version");
+	return nullptr;
+}
