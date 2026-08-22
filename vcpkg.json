@@ -1,24 +1,42 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
-    "name": "commonlibsse-plugin",
-    "version-string": "1.0.0",
-    "port-version": 0,
-    "description": "SKSE plugin based on CommonLibSSE, for unified AE/SE/VR deployment.",
-    "homepage": "https://www.skyrimng.com",
-    "license": "Apache-2.0",
-    "features": {
-        "plugin": {
-            "description": "Build the SKSE plugin.",
-            "dependencies": [
-                "commonlibsse-ng",
-                "nlohmann-json",
-                "simpleini",
-                "magic-enum",
-                "glm"
-            ]
-        }
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "commonlibsse-plugin",
+  "version-string": "1.0.0",
+  "port-version": 0,
+  "description": "SKSE plugin based on CommonLibSSE, for unified AE/SE/VR deployment.",
+  "homepage": "https://www.skyrimng.com",
+  "license": "GPL-3.0-or-later",
+  "features": {
+    "plugin": {
+      "description": "Build the SKSE plugin.",
+      "dependencies": [
+        "nlohmann-json",
+        "simpleini",
+        "magic-enum",
+        "glm"
+      ]
+    }
+  },
+  "default-features": [
+    "plugin"
+  ],
+  "dependencies": [
+    {
+      "name": "directxmath",
+      "version>=": "2025-04-03"
     },
-    "default-features": [
-        "plugin"
-    ]
+    {
+      "name": "directxtk",
+      "version>=": "2025-10-27"
+    },
+    {
+      "name": "fmt",
+      "version>=": "12.1.0"
+    },
+    {
+      "name": "spdlog",
+      "version>=": "1.16.0"
+    }
+  ],
+  "builtin-baseline": "ee12231b20c95013c6638d845d04c91559a1d1ff"
 }
